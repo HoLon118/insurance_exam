@@ -1,0 +1,17 @@
+# 忽略所有檔案和資料夾
+*
+# --- 重新包含指定的檔案 ---
+!input.css
+!tailwind.config.js
+!package.json
+!package-lock.json
+!README.md
+!public/index.html
+!public/output.css
+!public/script.js
+
+# 確保 .gitignore 本身也被追蹤 (可選，但建議)
+!.gitignore
+
+# 確保 public/ 資料夾本身的路徑仍然可用於重新包含 (通常不需要，但更穩健)
+!public/

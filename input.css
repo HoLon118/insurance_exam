@@ -1,0 +1,228 @@
+/* src/input.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+/* ====================================================================== */
+/* === [1] JAVASCRIPT 動態生成的 CHAPTER BUTTONS (KEEP) === */
+/* ====================================================================== */
+
+@media (prefers-color-scheme: dark) {
+  .dark\:hover\:bg-gray-600:hover {
+    --tw-bg-opacity: 1;
+    background-color: rgb(75 85 99 / var(--tw-bg-opacity, 1));
+  }
+}
+
+.chapter-btn {
+  --tw-bg-opacity: 1;
+  /* 未選取時的顏色 (灰色) */
+  background-color: rgb(156 163 175 / var(--tw-bg-opacity, 1)); /* bg-gray-400 */
+  color: white;
+  font-weight: 600; /* font-semibold */
+  padding: 0.5rem 0.75rem; /* py-2 px-3 */
+  border-radius: 0.5rem; /* rounded-lg */
+  transition: all 0.2s ease-in-out;
+  font-size: 0.875rem; /* text-sm */
+  line-height: 1.25rem;
+  border-width: 2px;
+  border-color: transparent;
+  cursor: pointer;
+  width: 100%;
+}
+
+.chapter-btn:hover {
+  filter: brightness(1.15);
+}
+
+.chapter-btn.selected {
+  --tw-bg-opacity: 1;
+  /* 選取時的顏色 (綠色) */
+  background-color: rgb(22 163 74 / var(--tw-bg-opacity, 1)); /* bg-green-600 */
+  /* 選取時的邊框 (白色) */
+  --tw-border-opacity: 1;
+  border-color: rgb(249 250 251 / var(--tw-border-opacity, 1)); /* border-gray-50 */
+}
+
+/* 在暗黑模式下，調整選取時的邊框顏色 */
+@media (prefers-color-scheme: dark) {
+  .chapter-btn.selected {
+    --tw-border-opacity: 1;
+    border-color: rgb(75 85 99 / var(--tw-border-opacity, 1)); /* dark:border-gray-600 */
+  }
+}
+
+/* ====================================================================== */
+/* === [2] 全域/容器/元件樣式 (RESTORED) === */
+/* ====================================================================== */
+
+.option-btn.correct {
+  background-color: #10B981;
+  color: white;
+  border-color: #059669;
+}
+
+.option-btn.incorrect {
+  background-color: #EF4444;
+  color: white;
+  border-color: #DC2626;
+}
+
+.option-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+body > div {
+  width: 50% !important;
+  height: 95vh !important;
+  display: flex;
+  flex-direction: column;
+}
+
+#quiz-container, #score-container, #selection-container, #type-selection-container, #browse-container {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding-bottom: 20px;
+}
+
+#question-text, #browse-question {
+  font-size: 1.25em;
+  font-weight: 600;
+  line-height: 1.7;
+  text-align: left;
+  margin-bottom: 1.5rem;
+  white-space: pre-wrap;
+}
+
+#explanation-text {
+  font-size: 0.95em;
+  color: #6b7280;
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  text-align: left;
+  line-height: 1.7;
+}
+
+#browse-explanation {
+  font-size: 0.95em;
+  color: #050505;
+  /* 亮色模式：使用您指定的 #050505 */
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  text-align: left;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+#score-analysis {
+  text-align: left;
+  margin-top: 1.5rem;
+  padding: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+#score-analysis h3 {
+  font-size: 1.25rem;
+  font-semibold: 600;
+  margin-bottom: 0.75rem;
+}
+
+#score-analysis div {
+  margin-bottom: 0.5rem;
+}
+
+#browse-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+#browse-nav button {
+  background-color: #4B5563;
+  /* Gray */
+  color: white;
+  font-weight: bold;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+}
+
+#browse-nav button:hover:not(:disabled) {
+  background-color: #6B7280;
+}
+
+#browse-nav button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+#browse-jump-input {
+  flex-grow: 1;
+  margin: 0 0.75rem;
+  padding: 0.5rem;
+  border: 2px solid #D1D5DB;
+  border-radius: 8px;
+  text-align: center;
+  color: #050505;
+  /* 固定為您指定的 #050505 (覆蓋亮暗模式) */
+}
+
+/* ====================================================================== */
+/* === [3] 暗黑模式覆蓋 (RESTORED) === */
+/* ====================================================================== */
+
+@media (prefers-color-scheme: dark) {
+  #explanation-text {
+    background-color: #374151;
+    color: #d1d5db;
+  }
+
+  #browse-explanation {
+    background-color: #374151;
+    color: inherit;
+  }
+
+  #browse-jump-input {
+    border-color: #4B5563;
+  }
+
+  #score-analysis {
+    border-top-color: #4b5563;
+  }
+
+  #browse-nav {
+    border-top-color: #4b5563;
+  }
+}
+
+/* ====================================================================== */
+/* === [4] RWD 覆蓋 (RESTORED) === */
+/* ====================================================================== */
+
+@media (max-width: 1024px) {
+  body > div {
+    width: 70% !important;
+  }
+}
+
+@media (max-width: 768px) {
+  body > div {
+    width: 95% !important;
+    height: auto !important;
+    min-height: 95vh !important;
+  }
+
+  #question-text, #browse-question {
+    font-size: 1.1em;
+    line-height: 1.6;
+  }
+}

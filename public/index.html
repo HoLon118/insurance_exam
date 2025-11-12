@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>保險法規與實務 問答 App</title>
+    <link href="./output.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-[#0F0F0F] dark:text-gray-100 flex flex-col items-center min-h-screen font-sans py-8">
+
+    <div class="w-full max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 sm:p-8 flex-grow">
+        <h1 class="text-2xl sm:text-3xl font-bold text-center text-blue-600 dark:text-blue-400 mb-6">保險法規與實務 測驗</h1>
+
+        <div id="type-selection-container" class="space-y-5 text-center items-center flex flex-col justify-center">
+            <p class="text-xl font-semibold mb-4">請選擇您想挑戰的測驗類型：</p>
+            
+            <button id="law-btn" class="w-full sm:w-3/4 bg-teal-600 hover:bg-teal-800 text-white font-bold py-4 px-6 rounded-lg transition-colors duration-200 text-lg">
+                (測驗) 保險法規
+            </button>
+            <button id="practice-btn" class="w-full sm:w-3/4 bg-sky-600 hover:bg-sky-800 text-white font-bold py-4 px-6 rounded-lg transition-colors duration-200 text-lg">
+                (測驗) 保險實務
+            </button>
+            <button id="market-btn" class="w-full sm:w-3/4 bg-indigo-600 hover:bg-indigo-800 text-white font-bold py-4 px-6 rounded-lg transition-colors duration-200 text-lg">
+                (測驗) 金融常識
+            </button>
+            
+            <hr class="w-3/4 border-gray-300 dark:border-gray-600 my-4">
+            
+            <button id="browse-law-btn" class="w-full sm:w-3/4 bg-cyan-600 hover:bg-cyan-800 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-200 text-lg">
+                瀏覽 保險法規 (全)
+            </button>
+            <button id="browse-practice-btn" class="w-full sm:w-3/4 bg-blue-600 hover:bg-blue-800 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-200 text-lg">
+                瀏覽 保險實務 (全)
+            </button>
+            <button id="browse-market-btn" class="w-full sm:w-3/4 bg-violet-600 hover:bg-violet-800 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-200 text-lg">
+                瀏覽 金融常識 (全)
+            </button>
+            
+            <p id="loading-text" class="text-lg text-gray-600 dark:text-gray-300 hidden pt-4">題庫加載中...</p>
+        </div>
+
+        <div id="selection-container" class="space-y-6 text-center items-center hidden flex flex-col justify-center">
+            
+            <p class="text-xl font-semibold mb-4">章節選擇：</p>
+            
+            <div class="grid grid-cols-2 gap-3 mb-4 w-full sm:w-1/2">
+
+                <button id="select-all-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-6 rounded-lg transition-colors duration-200 text-lg">
+                    全選
+                </button>
+                
+                <button id="deselect-all-btn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-4 px-6 rounded-lg transition-colors duration-200 text-lg">
+                    全不選
+                </button>
+                
+            </div>
+
+            <div id="chapter-buttons-container" class="grid grid-cols-2 gap-2 mb-4 p-3 border border-gray-700 rounded-md max-h-[300px] overflow-y-auto">
+                </div>
+
+            <div class="w-full pt-4 border-t border-gray-200 dark:border-gray-700">
+                <label for="question-count" class="block text-xl font-semibold mb-4">請輸入要練習的題目數量：</label>
+                <input type="number" id="question-count" name="question-count" min="1"
+                        class="w-3/4 sm:w-1/2 p-3 text-lg border-2 border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-center"
+                        placeholder="例如: 20">
+                <p id="total-questions-info" class="text-sm text-gray-500 dark:text-gray-400 mt-2"></p>
+            </div>
+            <button id="start-btn" class="w-full sm:w-1/2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-6 rounded-lg transition-colors duration-200 text-lg">
+                開始測驗
+            </button>
+            <button id="back-to-menu-btn" class="w-full sm:w-1/2 bg-gray-500 hover:bg-gray-600 text-white font-bold py-4 px-6 rounded-lg transition-colors duration-200 text-lg mt-3">
+                回到主選單
+            </button>
+        </div>
+
+        <div id="quiz-container" class="space-y-4 hidden flex flex-col">
+            
+            <div class="flex-grow overflow-y-auto pr-2">
+                
+                <div id="question-container">
+                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mb-4">
+                        <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+                    </div>
+                    <p id="question-meta" class="text-sm text-gray-500 dark:text-gray-400 mb-2">題號: # | 章節: </p>
+                    <p id="question-text" class="text-xl sm:text-2xl font-semibold"></p>
+                </div>
+
+                <div id="feedback-container" class="h-auto min-h-[4rem] mt-4">
+                    <p id="feedback-text" class="text-lg font-medium text-center"></p>
+                    <p id="explanation-text" class="hidden"></p>
+                </div>
+
+            </div>
+            <div id="options-container" class="grid grid-cols-2 sm:grid-cols-4 gap-3 justify-center">
+                <button class="option-btn px-4 py-8 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-200 text-lg font-bold" data-value="1">(1)</button>
+                <button class="option-btn px-4 py-8 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-200 text-lg font-bold" data-value="2">(2)</button>
+                <button class="option-btn px-4 py-8 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-200 text-lg font-bold" data-value="3">(3)</button>
+                <button class="option-btn px-4 py-8 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-200 text-lg font-bold" data-value="4">(4)</button>
+            </div>
+            <button id="next-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-200 hidden">
+                下一題
+            </button>
+            <button id="end-quiz-btn" class="w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-200 mt-2 hidden">
+                提前結束測驗
+            </button>
+            </div>
+        <div id="score-container" class="hidden text-center space-y-6 flex flex-col justify-center">
+            <p class="text-2xl font-semibold">測驗完成！</p>
+            <p id="score-text" class="4xl font-bold"></p>
+            <div id="score-analysis">
+                <h3>各章節答題分析：</h3>
+            </div>
+            <button id="restart-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-200">
+                重新開始
+            </button>
+        </div>
+
+        <div id="browse-container" class="space-y-4 hidden flex flex-col">
+            <div class="flex-grow overflow-y-auto pr-2">
+                <p id="browse-meta" class="text-sm text-gray-500 dark:text-gray-400 mb-2">題號: # | 章節: </p>
+                <p id="browse-question"></p>
+                <p id="browse-explanation"></p>
+            </div>
+            
+            <div id="browse-nav">
+                <button id="browse-prev-btn">⬅️</button>
+                <input type="text" id="browse-jump-input" placeholder="跳轉至 (輸入題號)">
+                <button id="browse-next-btn">➡️</button>
+            </div>
+            
+            <button id="browse-restart-btn" class="w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-200 mt-4">
+                返回主選單
+            </button>
+        </div>
+
+    </div>
+    
+    <footer-info class="text-xs text-gray-500 dark:text-gray-400 mt-6 text-center">
+        <a class="hover:text-blue-500" href="https://github.com/Holon118/insurance_exam" target="_blank" rel="noopener noreferrer">GitHub Repository</a> | 
+        <a class="hover:text-blue-500" href="https://github.com/Holon118/" target="_blank" rel="noopener noreferrer">Created by Holon118</a> | Copyright © 2025 Holon118. All rights reserved.
+    </footer-info>
+
+    <script src="script.js"></script>
+</body>
+</html>
