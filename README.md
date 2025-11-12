@@ -56,3 +56,4 @@ https://quiz-app-dbace.web.app/
 本系統內部的考題和資料內容（Content/Data）並非本專案作者原創。所有內容版權歸原始提供者所有，並保留所有權利。使用者在使用內容時需遵守其原始版權規範。
 
 * **Content Copyright © 2016 中華民國人壽保險管理學會. All rights reserved.**
+
