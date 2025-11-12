@@ -13,5 +13,8 @@
 # 確保 .gitignore 本身也被追蹤 (可選，但建議)
 !.gitignore
 
+# License 檔案
+!LICENSE
+
 # 確保 public/ 資料夾本身的路徑仍然可用於重新包含 (通常不需要，但更穩健)
 !public/
