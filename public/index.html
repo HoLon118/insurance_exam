@@ -3,42 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>保險法規與實務 問答 App</title>
+    <title>保險與金融 問答 App</title>
     <link href="./output.css" rel="stylesheet">
 </head>
 <body class="bg-gray-100 dark:bg-[#1A202C] text-[#0F0F0F] dark:text-gray-300 flex flex-col items-center min-h-screen font-sans py-8">
 
     <div class="w-full max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 sm:p-8 flex-grow">
-        <h1 class="text-2xl sm:text-3xl font-bold text-center text-blue-600 dark:text-blue-400 mb-6">保險法規與實務 測驗</h1>
+        <h1 class="text-2xl sm:text-3xl font-bold text-center text-blue-600 dark:text-blue-400 mb-6">保險與金融 問答 App</h1>
+        
+        <!-- <p class="text-xl font-semibold text-center mb-4">請選擇您想挑戰的科目：</p> -->
         
         <div id="type-selection-container" class="space-y-5 text-center items-center flex flex-col justify-center">
-            <p class="text-xl font-semibold mb-4">請選擇您想挑戰的測驗類型：</p>
             
-            <button id="law-btn" class="w-full sm:w-3/4 px-8 py-2 bg-teal-500 hover:bg-teal-800 text-white font-bold rounded-lg transition-colors duration-200 text-lg">
-                (測驗) 保險法規
+            <button id="main-law-btn" data-subject="law" class="w-full sm:w-3/4 px-8 py-4 bg-teal-500 hover:bg-teal-700 text-white font-bold rounded-lg transition-colors duration-200 text-lg">
+                保險法規
             </button>
-            <button id="practice-btn" class="w-full sm:w-3/4 px-8 py-2 bg-sky-500 hover:bg-sky-800 text-white font-bold rounded-lg transition-colors duration-200 text-lg">
-                (測驗) 保險實務
+            <button id="main-practice-btn" data-subject="practice" class="w-full sm:w-3/4 px-8 py-4 bg-sky-500 hover:bg-sky-700 text-white font-bold rounded-lg transition-colors duration-200 text-lg">
+                保險實務
             </button>
-            <button id="market-btn" class="w-full sm:w-3/4 px-8 py-2 bg-indigo-500 hover:bg-indigo-800 text-white font-bold rounded-lg transition-colors duration-200 text-lg">
-                (測驗) 金融常識
-            </button>
-            
-            <hr class="w-3/4 border-gray-300 dark:border-gray-600 my-4">
-            
-            <button id="browse-law-btn" class="w-full sm:w-3/4 px-8 py-2 bg-cyan-500 hover:bg-cyan-800 text-white font-bold rounded-lg transition-colors duration-200 text-lg">
-                瀏覽 保險法規 (全)
-            </button>
-            <button id="browse-practice-btn" class="w-full sm:w-3/4 px-8 py-2 bg-blue-500 hover:bg-blue-800 text-white font-bold rounded-lg transition-colors duration-200 text-lg">
-                瀏覽 保險實務 (全)
-            </button>
-            <button id="browse-market-btn" class="w-full sm:w-3/4 px-8 py-2 bg-violet-500 hover:bg-violet-800 text-white font-bold rounded-lg transition-colors duration-200 text-lg">
-                瀏覽 金融常識 (全)
+            <button id="main-market-btn" data-subject="market" class="w-full sm:w-3/4 px-8 py-4 bg-indigo-500 hover:bg-indigo-700 text-white font-bold rounded-lg transition-colors duration-200 text-lg">
+                金融常識
             </button>
             
             <p id="loading-text" class="text-lg text-gray-600 dark:text-gray-300 hidden pt-4">題庫加載中...</p>
         </div>
 
+        <div id="subject-selection-container" class="space-y-5 text-center items-center hidden flex flex-col justify-center">
+            <h2 id="subject-title" class="text-2xl font-bold mb-4 text-blue-600 dark:text-blue-400">科目名稱</h2>
+            
+            <button id="quiz-btn" data-type="quiz" class="w-full sm:w-3/4 px-8 py-4 bg-teal-500 hover:bg-teal-700 text-white font-bold rounded-lg transition-colors duration-200 text-lg">
+                (測驗) 開始練習
+            </button>
+            <button id="browse-all-btn" data-type="all" class="w-full sm:w-3/4 px-8 py-4 bg-cyan-500 hover:bg-cyan-700 text-white font-bold rounded-lg transition-colors duration-200 text-lg">
+                瀏覽 題庫 (全)
+            </button>
+            <button id="notes-btn" data-type="notes" class="w-full sm:w-3/4 px-8 py-4 bg-indigo-500 hover:bg-indigo-700 text-white font-bold rounded-lg transition-colors duration-200 text-lg">
+                查閱筆記 (已備註的題目)
+            </button>
+            <button id="favorites-btn" data-type="favorites" class="w-full sm:w-3/4 px-8 py-4 bg-violet-500 hover:bg-violet-700 text-white font-bold rounded-lg transition-colors duration-200 text-lg">
+                已標記的題目 (收藏)
+            </button>
+
+            <button id="back-to-subject-menu-btn" class="w-full sm:w-3/4 bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-200 mt-4">
+                回到科目選擇
+            </button>
+        </div>
+        
         <div id="selection-container" class="space-y-6 text-center items-center hidden flex flex-col justify-center">
             
             <p class="text-xl font-semibold mb-4">章節選擇：</p>
@@ -69,7 +79,7 @@
                 開始測驗
             </button>
             <button id="back-to-menu-btn" class="w-full sm:w-1/2 bg-gray-500 hover:bg-gray-600 text-white font-bold py-4 px-6 rounded-lg transition-colors duration-200 text-lg mt-3">
-                回到主選單
+                回到科目選擇
             </button>
         </div>
 
@@ -104,7 +114,7 @@
                 <div id="feedback-container" class="h-auto min-h-[4rem] mt-4">
                     <p id="feedback-text" class="text-lg font-medium text-center"></p>
                     
-                    <div id="explanation-editor" contenteditable="true" class="explanation-editor hidden" data-placeholder="請輸入您的自訂詳解 (Enter 儲存 / Shift+Enter 換行)"></div>
+                    <div id="explanation-editor" contenteditable="true" class="explanation-editor hidden" data-placeholder="請輸入您的筆記"></div>
                     
                     <div id="edit-controls-desktop" class="desktop-edit-controls hidden">
                         <button id="save-explanation-desktop-btn" class="w-1/2 bg-indigo-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200">
@@ -150,7 +160,7 @@
                 <h3>各章節答題分析：</h3>
             </div>
             <button id="restart-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-200">
-                重新開始
+                回到首頁
             </button>
         </div>
 

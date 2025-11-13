@@ -4,6 +4,9 @@ let practiceQuestionsCache = [];
 let marketQuestionsCache = []; // [NEW] 新增金融常識快取
 let chapterMap = new Map();
 
+// [NEW] 追蹤當前選中的科目 ('law', 'practice', 'market')
+let currentSubject = ''; 
+
 // --- 狀態變數 ---
 // [FIX] 確保 LocalStorage 在每次啟動時正確加載
 let favorites = new Set(JSON.parse(localStorage.getItem('favorites') || '[]')); 
@@ -15,15 +18,22 @@ let browseQuestions = [], currentBrowseIndex = 0;
 
 // --- DOM 元素 ---
 const mainTitle = document.querySelector('h1'); 
-const typeSelectionContainer = document.getElementById('type-selection-container');
-const lawBtn = document.getElementById('law-btn');
-const practiceBtn = document.getElementById('practice-btn');
-const marketBtn = document.getElementById('market-btn'); // [NEW] 金融常識測驗按鈕
 const loadingText = document.getElementById('loading-text');
 
-const browseLawBtn = document.getElementById('browse-law-btn');
-const browsePracticeBtn = document.getElementById('browse-practice-btn');
-const browseMarketBtn = document.getElementById('browse-market-btn'); // [NEW] 金融常識瀏覽按鈕
+// [MODIFIED] 主選單 (科目選擇) 按鈕 - 舊ID被移除，使用新的
+const typeSelectionContainer = document.getElementById('type-selection-container');
+const mainLawBtn = document.getElementById('main-law-btn'); // 新主選單按鈕
+const mainPracticeBtn = document.getElementById('main-practice-btn'); // 新主選單按鈕
+const mainMarketBtn = document.getElementById('main-market-btn'); // 新主選單按鈕
+
+// [NEW] 子選單 (操作選擇) DOM 元素
+const subjectSelectionContainer = document.getElementById('subject-selection-container');
+const subjectTitle = document.getElementById('subject-title');
+const quizBtn = document.getElementById('quiz-btn');
+const browseAllBtn = document.getElementById('browse-all-btn');
+const notesBtn = document.getElementById('notes-btn');
+const favoritesBtn = document.getElementById('favorites-btn');
+const backToSubjectMenuBtn = document.getElementById('back-to-subject-menu-btn'); // 回到第一層
 
 const selectionContainer = document.getElementById('selection-container');
 const quizContainer = document.getElementById('quiz-container');
@@ -50,7 +60,7 @@ const scoreText = document.getElementById('score-text');
 const scoreAnalysis = document.getElementById('score-analysis');
 const restartBtn = document.getElementById('restart-btn');
 const startBtn = document.getElementById('start-btn');
-const backToMenuBtn = document.getElementById('back-to-menu-btn');
+const backToMenuBtn = document.getElementById('back-to-menu-btn'); // 此按鈕現在回到 sub-menu
 
 const questionCountInput = document.getElementById('question-count');
 const totalQuestionsInfo = document.getElementById('total-questions-info');
@@ -84,15 +94,93 @@ const browseSaveMobileBtn = document.getElementById('browse-save-mobile-btn');
 const browseCancelMobileBtn = document.getElementById('browse-cancel-mobile-btn');
 
 
-// --- 函數 ---
-function setMenuButtonsDisabled(disabled) { 
-    lawBtn.disabled = disabled;
-    practiceBtn.disabled = disabled;
-    marketBtn.disabled = disabled; // [NEW]
-    browseLawBtn.disabled = disabled;
-    browsePracticeBtn.disabled = disabled;
-    browseMarketBtn.disabled = disabled; // [NEW]
+// --- 輔助函數 ---
+
+// [NEW] 獲取科目資訊
+function getSubjectInfo(subject) {
+    switch (subject) {
+        case 'law': return { name: '保險法規', path: 'questions_law.json', cache: lawQuestionsCache, setCache: (data) => { lawQuestionsCache = data; } };
+        case 'practice': return { name: '保險實務', path: 'questions_practices.json', cache: practiceQuestionsCache, setCache: (data) => { practiceQuestionsCache = data; } };
+        case 'market': return { name: '金融常識', path: 'questions_market.json', cache: marketQuestionsCache, setCache: (data) => { marketQuestionsCache = data; } };
+        default: return null;
+    }
 }
+
+// [MODIFIED] 禁用按鈕列表
+function setMenuButtonsDisabled(disabled) { 
+    mainLawBtn.disabled = disabled;
+    mainPracticeBtn.disabled = disabled;
+    mainMarketBtn.disabled = disabled;
+    
+    // 子選單按鈕
+    quizBtn.disabled = disabled;
+    browseAllBtn.disabled = disabled;
+    notesBtn.disabled = disabled;
+    favoritesBtn.disabled = disabled;
+    backToSubjectMenuBtn.disabled = disabled;
+}
+
+// [NEW] 處理第一層科目選擇
+function handleSubjectSelect(e) {
+    // [FIX] 使用 e.currentTarget 確保我們拿到的是綁定事件監聽器的按鈕元素
+    const subject = e.currentTarget.dataset.subject;
+    const info = getSubjectInfo(subject);
+
+    if (!info) {
+        return; 
+    }
+
+    currentSubject = subject;
+    
+    // 設置第二層選單標題
+    subjectTitle.textContent = `【${info.name}】`;
+
+    // 進行畫面切換
+    typeSelectionContainer.classList.add('hidden');
+    subjectSelectionContainer.classList.remove('hidden');
+}
+
+// [MODIFIED] 處理第二層操作選擇 (移除不必要的畫面隱藏)
+async function handleActionSelect(e) {
+    // 使用事件代理，確保點擊到按鈕
+    const selectedButton = e.target.closest('button');
+    if (!selectedButton) return;
+    
+    const actionType = selectedButton.dataset.type;
+    const info = getSubjectInfo(currentSubject);
+
+    if (!info || !actionType) {
+        // 如果沒有 currentSubject 或 actionType，可能是點擊了 backToSubjectMenuBtn 或容器空白處
+        return;
+    }
+
+    if (actionType === 'quiz') {
+        // 測驗模式：載入問題並進入章節選擇畫面
+        await loadQuestions(info.path);
+        
+        // 測驗載入成功後，直接進入 selection-container
+        subjectSelectionContainer.classList.add('hidden');
+        selectionContainer.classList.remove('hidden');
+
+    } else {
+        // 瀏覽模式：直接載入過濾後的題庫
+        // loadFilteredBrowseQuestions 將處理所有畫面切換
+        await loadFilteredBrowseQuestions(info.path, actionType);
+    }
+}
+
+// [NEW] 回到第二層選單 (從章節選擇/測驗設定畫面返回)
+function backToSubjectMenu() {
+    selectionContainer.classList.add('hidden');
+    subjectSelectionContainer.classList.remove('hidden');
+    
+    // 恢復主標題到科目操作選單的狀態
+    const info = getSubjectInfo(currentSubject);
+    if (info) {
+        mainTitle.textContent = `保險與金融 問答 App`; 
+    }
+}
+
 
 function getChapterValue(chapterName) {
     if (chapterName === '附錄') return 999;
@@ -107,7 +195,6 @@ function populateChapterSelectors(questionsData) {
     chapterMap.clear();
     chapterButtonsContainer.innerHTML = '';
 
-    // [MODIFIED] 金融常識的題目沒有 category，統一設為 '金融常識'
     const isMarketQuiz = questionsData.some(q => !q.category || q.category.trim() === '');
     
     for (const q of questionsData) {
@@ -169,33 +256,16 @@ function handleDeselectAll() {
     updateSelectedTotal();
 }
 
-
+// [MODIFIED] loadQuestions 配合新流程
 async function loadQuestions(jsonPath) {
-    let newTitle = ''; 
-    try {
-        let targetCache, setTargetCache;
-        if (jsonPath === 'questions_law.json') {
-            targetCache = lawQuestionsCache;
-            setTargetCache = (data) => { lawQuestionsCache = data; };
-            newTitle = '保險法規 測驗'; 
-        } else if (jsonPath === 'questions_practices.json') { // [MODIFIED]
-            targetCache = practiceQuestionsCache;
-            setTargetCache = (data) => { practiceQuestionsCache = data; };
-            newTitle = '保險實務 測驗'; 
-        } else if (jsonPath === 'questions_market.json') { // [NEW]
-            targetCache = marketQuestionsCache;
-            setTargetCache = (data) => { marketQuestionsCache = data; };
-            newTitle = '金融常識 測驗'; 
-        } else {
-             return; 
-        }
+    const info = getSubjectInfo(currentSubject);
+    if (!info) return;
 
-        if (targetCache.length > 0) {
-            allQuestions = targetCache;
+    try {
+        if (info.cache.length > 0) {
+            allQuestions = info.cache;
             populateChapterSelectors(allQuestions);
-            mainTitle.textContent = newTitle; 
-            typeSelectionContainer.classList.add('hidden');
-            selectionContainer.classList.remove('hidden');
+            mainTitle.textContent = `【${info.name}】測驗設定`; 
             return;
         }
 
@@ -208,20 +278,16 @@ async function loadQuestions(jsonPath) {
         }
         const data = await response.json();
         
-        // [MODIFIED] 處理金融常識沒有 category 的情況
         const processedData = data.map(q => ({
             ...q,
             category: (q.category && q.category.trim() !== '') ? q.category : '金融常識'
         }));
         
-        setTargetCache(processedData);
+        info.setCache(processedData);
         allQuestions = processedData;
         
-        mainTitle.textContent = newTitle; 
+        mainTitle.textContent = `【${info.name}】測驗設定`; 
         populateChapterSelectors(allQuestions);
-        
-        typeSelectionContainer.classList.add('hidden');
-        selectionContainer.classList.remove('hidden');
 
     } catch (error) {
         console.error(`無法載入題庫 ${jsonPath}:`, error);
@@ -232,75 +298,86 @@ async function loadQuestions(jsonPath) {
     }
 }
 
-async function loadBrowseQuestions(jsonPath) {
-    let newTitle = ''; 
+// [MODIFIED] loadFilteredBrowseQuestions 配合新流程 (修復無資料時畫面清空問題)
+async function loadFilteredBrowseQuestions(jsonPath, mode = 'all') {
+    let titlePrefix = '瀏覽';
+    let filterFn = q => true; 
+
+    if (mode === 'notes') {
+        titlePrefix = '筆記查閱';
+        filterFn = q => !!userExplanations[q.id.toString()];
+    } else if (mode === 'favorites') {
+        titlePrefix = '收藏查閱';
+        filterFn = q => favorites.has(q.id.toString());
+    }
+
+    const info = getSubjectInfo(currentSubject);
+    if (!info) return;
+
     try {
-        let targetCache, setTargetCache;
-        if (jsonPath === 'questions_law.json') {
-            targetCache = lawQuestionsCache;
-            setTargetCache = (data) => { lawQuestionsCache = data; };
-            newTitle = '瀏覽 保險法規'; 
-        } else if (jsonPath === 'questions_practices.json') { // [MODIFIED]
-            targetCache = practiceQuestionsCache;
-            setTargetCache = (data) => { practiceQuestionsCache = data; };
-            newTitle = '瀏覽 保險實務'; 
-        } else if (jsonPath === 'questions_market.json') { // [NEW]
-            targetCache = marketQuestionsCache;
-            setTargetCache = (data) => { marketQuestionsCache = data; };
-            newTitle = '瀏覽 金融常識'; 
-        } else {
-             return;
+        let targetCache = info.cache;
+        
+        // 確保題庫已載入
+        if (targetCache.length === 0) {
+            loadingText.classList.remove('hidden');
+            setMenuButtonsDisabled(true);
+            
+            const response = await fetch(jsonPath);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            
+            const processedData = data.map(q => ({
+                ...q,
+                category: (q.category && q.category.trim() !== '') ? q.category : '金融常識'
+            }));
+            info.setCache(processedData);
+            targetCache = processedData; 
+            setMenuButtonsDisabled(false);
         }
 
-        if (targetCache.length > 0) {
-            browseQuestions = [...targetCache].sort((a, b) => a.id - b.id); 
-            currentBrowseIndex = 0;
-            mainTitle.textContent = newTitle; 
-            typeSelectionContainer.classList.add('hidden');
-            browseContainer.classList.remove('hidden');
-            showBrowseQuestion();
-            return; 
+        browseQuestions = targetCache
+            .filter(filterFn)
+            .sort((a, b) => a.id - b.id);
+        
+        if (browseQuestions.length === 0) {
+             alert(`查無相關題目！\n\n您尚未對 【${info.name}】 ${titlePrefix} 項目做任何標記或筆記。`);
+             
+             // [FIX] 無資料時，確保 subjectSelectionContainer 是可見的
+             subjectSelectionContainer.classList.remove('hidden');
+             return; 
         }
 
-        loadingText.classList.remove('hidden');
-        setMenuButtonsDisabled(true);
-
-        const response = await fetch(jsonPath);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        
-        // [MODIFIED] 處理金融常識沒有 category 的情況
-        const processedData = data.map(q => ({
-            ...q,
-            category: (q.category && q.category.trim() !== '') ? q.category : '金融常識'
-        }));
-        
-        setTargetCache(processedData);
-        
-        mainTitle.textContent = newTitle; 
-        browseQuestions = [...processedData].sort((a, b) => a.id - b.id);
         currentBrowseIndex = 0;
-        
-        typeSelectionContainer.classList.add('hidden');
+        mainTitle.textContent = `${titlePrefix} 【${info.name}】`; 
+        subjectSelectionContainer.classList.add('hidden');
         browseContainer.classList.remove('hidden');
         showBrowseQuestion();
 
     } catch (error) {
         console.error(`無法載入瀏覽題庫 ${jsonPath}:`, error);
         loadingText.textContent = `題庫 ${jsonPath} 載入失敗。`;
+        // 如果載入失敗，也返回第二層選單
+        subjectSelectionContainer.classList.remove('hidden');
     } finally {
         loadingText.classList.add('hidden');
         setMenuButtonsDisabled(false);
     }
 }
 
+// [MODIFIED] loadBrowseQuestions 配合新流程
+async function loadBrowseQuestions(jsonPath) {
+    // 這裡實際上已經不再使用，因為操作是透過 handleActionSelect 觸發 loadFilteredBrowseQuestions
+    await loadFilteredBrowseQuestions(jsonPath, 'all'); 
+}
+
+
 // [FIX/MODIFIED] 閱覽頁面顯示使用者筆記，統一格式
 function showBrowseQuestion() {
     if (browseQuestions.length === 0) return;
     const q = browseQuestions[currentBrowseIndex];
-    const questionId = q.id.toString(); // 獲取題目 ID
+    const questionId = q.id.toString(); 
     
     // 重設編輯器狀態
     browseExplanationEditor.classList.add('hidden');
@@ -418,6 +495,10 @@ function showQuestion() {
     progressBar.style.width = `${progressPercent}%`;
     const currentQuestion = questions[currentQuestionIndex];
     
+    const info = getSubjectInfo(currentSubject);
+    // [MODIFIED] 確保主標題顯示當前科目和進度
+    mainTitle.textContent = `${info ? info.name : '測驗中'} - 第 ${currentQuestionIndex + 1} 題`;
+
     // [MODIFIED] 調整 meta 顯示
     questionMeta.querySelector('.meta-text').textContent = `題號: #${currentQuestion.id} | 章節: ${currentQuestion.category}`;
     questionText.textContent = currentQuestion.question;
@@ -575,15 +656,18 @@ function handleNextButton() {
     showQuestion(); 
 }
 
+// [MODIFIED] 重新開始 (回到主選單)
 function handleRestart() {
     scoreContainer.classList.add('hidden');
     quizContainer.classList.add('hidden'); 
     selectionContainer.classList.add('hidden');
     browseContainer.classList.add('hidden'); 
+    subjectSelectionContainer.classList.add('hidden'); // 隱藏第二層
     
-    typeSelectionContainer.classList.remove('hidden'); 
+    typeSelectionContainer.classList.remove('hidden'); // 顯示第一層
     
-    mainTitle.textContent = '保險法規與實務 測驗'; 
+    mainTitle.textContent = '保險與金融 問答 App'; // [MODIFIED] 配合新的應用程式名稱
+    currentSubject = '';
     
     questionCountInput.value = ''; 
     
@@ -683,7 +767,8 @@ function saveExplanationEditGeneric(isBrowseMode) {
     
     const editor = isBrowseMode ? browseExplanationEditor : explanationEditor;
     const desktopControls = isBrowseMode ? browseEditControlsDesktop : editControlsDesktop;
-    const mobileControls = isBrowseMode ? browseEditControlsMobile : editControlsMobile;
+    // [FIX] 修正 mobileControls 變數名稱錯誤
+    const mobileControls = isBrowseMode ? browseEditControlsMobile : editControlsMobile; 
     const displayElement = isBrowseMode ? browseExplanation : explanationText; // [NEW] 取得顯示元素
     
     if (questionsList.length === 0) return;
@@ -703,6 +788,7 @@ function saveExplanationEditGeneric(isBrowseMode) {
     
     // 退出編輯模式
     editor.classList.add('hidden');
+    // [FIX] 正確使用 mobileControls 隱藏按鈕
     mobileControls.classList.add('hidden');
     desktopControls.classList.add('hidden');
 
@@ -726,7 +812,6 @@ function saveExplanationEditGeneric(isBrowseMode) {
         noteBtn.classList.remove('hidden');
     }
 }
-
 
 // [NEW] 筆記功能 (取消) - 作答區
 function cancelExplanationEdit() {
@@ -757,16 +842,29 @@ function cancelExplanationEditGeneric(isBrowseMode) {
 }
 
 
-// [MISSING FUNCTION DEFINITION ADDED HERE]
+// [MODIFIED] handleKeydown 函式 - 增加數字、字母鍵答題和 B/N 收藏/筆記快捷鍵
 function handleKeydown(e) {
     // 1. 處理瀏覽畫面 (Browse Container)
     if (!browseContainer.classList.contains('hidden')) {
         if (document.activeElement === browseJumpInput) return;
         
-        if (e.key === 'k' || e.key === 'ArrowRight' || e.key === ' ') { 
+        // 瀏覽模式: 收藏/筆記快捷鍵 (B/N)
+        // [MODIFIED] 收藏快捷鍵改為 'b'
+        if (e.key.toLowerCase() === 'b') { 
+            e.preventDefault(); 
+            browseFavoriteBtn.click();
+            return;
+        } else if (e.key.toLowerCase() === 'n') {
+            e.preventDefault();
+            browseNoteBtn.click();
+            return;
+        }
+
+        // 瀏覽模式: 換題快捷鍵 (K/J/Arrows/Space)
+        if (e.key.toLowerCase() === 'k' || e.key === 'ArrowRight' || e.key === ' ') { 
             e.preventDefault(); 
             handleBrowseNext();
-        } else if (e.key === 'j' || e.key === 'ArrowLeft') { 
+        } else if (e.key.toLowerCase() === 'j' || e.key === 'ArrowLeft') { 
             e.preventDefault(); 
             handleBrowsePrev();
         }
@@ -776,22 +874,21 @@ function handleKeydown(e) {
     // 2. 處理測驗畫面 (Quiz Container)
     if (!quizContainer.classList.contains('hidden')) {
         
-        // [FIX] 編輯器獲取焦點時，允許所有按鍵的預設行為 (包括 Enter 的換行)
-        // 儲存/取消功能必須點擊按鈕 (解決 Enter 誤觸答案 1 的問題)
+        // 如果筆記編輯器獲取焦點，則允許預設行為 (例如 Enter 換行)
         if (explanationEditor === document.activeElement) {
-             // 確保 Enter 鍵在 contenteditable 中執行換行（預設行為）
-            return;
+             return;
         }
 
-        // 處理 "下一題" (Enter 鍵 或 空白鍵)
+        // 處理 "下一題" (Enter 鍵 或 空白鍵) - 僅在答案選定後 (即 nextBtn 可見)
         if ((e.key === 'Enter' || e.key === ' ') && !nextBtn.classList.contains('hidden')) { 
             e.preventDefault(); 
             nextBtn.click();
             return;
         }
         
-        // 映射按鍵到選項 (如果題目已經答完/在編輯模式則不觸發)
-        if(explanationEditor.classList.contains('hidden') && endQuizBtn.classList.contains('hidden')) {
+        // 映射按鍵到選項 (僅在未答題且非編輯模式時觸發)
+        // 判斷條件 !nextBtn.classList.contains('hidden') === false 表示 nextBtn 尚未顯示 (即還未答題)
+        if(explanationEditor.classList.contains('hidden') && !nextBtn.classList.contains('hidden') === false) {
             let targetValue;
             switch (e.key.toLowerCase()) { 
                 case '1':
@@ -810,11 +907,11 @@ function handleKeydown(e) {
                 case ';':
                     targetValue = '4';
                     break;
-                case 'f': // [NEW] 收藏 (Favorite)
+                case 'b': // [MODIFIED] 收藏 (Book-mark)
                     e.preventDefault();
                     favoriteBtn.click();
                     return;
-                case 'n': // [NEW] 筆記 (Note)
+                case 'n': // 筆記 (Note)
                     e.preventDefault();
                     noteBtn.click();
                     return;
@@ -834,21 +931,25 @@ function handleKeydown(e) {
 
 
 // --- 事件監聽器 ---
-lawBtn.addEventListener('click', () => loadQuestions('questions_law.json'));
-practiceBtn.addEventListener('click', () => loadQuestions('questions_practices.json'));
-marketBtn.addEventListener('click', () => loadQuestions('questions_market.json')); // [NEW]
-browseLawBtn.addEventListener('click', () => loadBrowseQuestions('questions_law.json'));
-browsePracticeBtn.addEventListener('click', () => loadBrowseQuestions('questions_practices.json'));
-browseMarketBtn.addEventListener('click', () => loadBrowseQuestions('questions_market.json')); // [NEW]
+
+// [FIX] 第一層選單：為三個主要科目按鈕添加事件監聽器
+mainLawBtn.addEventListener('click', handleSubjectSelect);
+mainPracticeBtn.addEventListener('click', handleSubjectSelect);
+mainMarketBtn.addEventListener('click', handleSubjectSelect);
+
+// [NEW] 第二層選單 (通用事件代理)
+subjectSelectionContainer.addEventListener('click', handleActionSelect);
+// [MODIFIED] 回到主選單 (第一層)
+backToSubjectMenuBtn.addEventListener('click', handleRestart); 
+// [MODIFIED] 回到科目選擇 (第二層) - 從章節選擇/測驗畫面返回
+backToMenuBtn.addEventListener('click', backToSubjectMenu); 
 
 startBtn.addEventListener('click', startQuiz);
 nextBtn.addEventListener('click', handleNextButton);
 
-// *** 新增：提前結束測驗的監聽器 ***
 endQuizBtn.addEventListener('click', () => {
-    // 彈出確認視窗
     if (confirm('您確定要提前結束測驗嗎？\n\n將會結算您目前已回答的題目。')) {
-        showScore(true); // 傳入 true (代表提前結束)
+        showScore(true);
     }
 });
 
@@ -859,7 +960,6 @@ optionsContainer.addEventListener('click', (e) => {
 });
 restartBtn.addEventListener('click', handleRestart);
 browseRestartBtn.addEventListener('click', handleRestart); 
-backToMenuBtn.addEventListener('click', handleRestart);
 
 browsePrevBtn.addEventListener('click', handleBrowsePrev);
 browseNextBtn.addEventListener('click', handleBrowseNext);
@@ -869,7 +969,6 @@ chapterButtonsContainer.addEventListener('click', handleChapterToggle);
 selectAllBtn.addEventListener('click', handleSelectAll);
 deselectAllBtn.addEventListener('click', handleDeselectAll);
 
-// [NEW] 收藏和筆記事件監聽器 - 作答區
 favoriteBtn.addEventListener('click', () => toggleFavoriteGeneric(false));
 noteBtn.addEventListener('click', toggleExplanationEdit);
 saveExplanationMobileBtn.addEventListener('click', saveExplanationEdit);
@@ -877,8 +976,6 @@ cancelExplanationBtn.addEventListener('click', cancelExplanationEdit);
 saveExplanationDesktopBtn.addEventListener('click', saveExplanationEdit);
 cancelExplanationDesktopBtn.addEventListener('click', cancelExplanationEdit);
 
-
-// [NEW] 收藏和筆記事件監聽器 - 瀏覽區
 browseFavoriteBtn.addEventListener('click', () => toggleFavoriteGeneric(true));
 browseNoteBtn.addEventListener('click', toggleBrowseExplanationEdit);
 browseSaveMobileBtn.addEventListener('click', saveBrowseExplanationEdit);
@@ -886,9 +983,7 @@ browseCancelMobileBtn.addEventListener('click', cancelBrowseExplanationEdit);
 browseSaveDesktopBtn.addEventListener('click', saveBrowseExplanationEdit);
 browseCancelDesktopBtn.addEventListener('click', cancelBrowseExplanationEdit);
 
-// [NEW] 視窗大小改變時，重新檢查顯示哪個控制項
 window.addEventListener('resize', () => {
-    // 作答區編輯器
     if (!explanationEditor.classList.contains('hidden')) {
         if (window.innerWidth >= 640) {
             editControlsDesktop.classList.remove('hidden');
@@ -898,7 +993,6 @@ window.addEventListener('resize', () => {
             editControlsDesktop.classList.add('hidden');
         }
     }
-    // 瀏覽區編輯器
     if (!browseExplanationEditor.classList.contains('hidden')) {
         if (window.innerWidth >= 640) {
             browseEditControlsDesktop.classList.remove('hidden');
