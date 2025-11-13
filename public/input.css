@@ -1,0 +1,380 @@
+/* src/input.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+/* ====================================================================== */
+/* === [1] JAVASCRIPT 動態生成的 CHAPTER BUTTONS (KEEP) === */
+/* ====================================================================== */
+
+@media (prefers-color-scheme: dark) {
+  .dark\:hover\:bg-gray-600:hover {
+    --tw-bg-opacity: 1;
+    background-color: rgb(75 85 99 / var(--tw-bg-opacity, 1));
+  }
+}
+
+.chapter-btn {
+  --tw-bg-opacity: 1;
+  /* 未選取時的顏色 (灰色) */
+  background-color: rgb(156 163 175 / var(--tw-bg-opacity, 1)); /* bg-gray-400 */
+  color: white;
+  font-weight: 600; /* font-semibold */
+  padding: 0.5rem 0.75rem; /* py-2 px-3 */
+  border-radius: 0.5rem; /* rounded-lg */
+  transition: all 0.2s ease-in-out;
+  font-size: 0.875rem; /* text-sm */
+  line-height: 1.25rem;
+  border-width: 2px;
+  border-color: transparent;
+  cursor: pointer;
+  width: 100%;
+}
+
+.chapter-btn:hover {
+  filter: brightness(1.15);
+}
+
+.chapter-btn.selected {
+  --tw-bg-opacity: 1;
+  /* 選取時的顏色 (綠色) */
+  background-color: rgb(22 163 74 / var(--tw-bg-opacity, 1)); /* bg-green-600 */
+  /* 選取時的邊框 (白色) */
+  --tw-border-opacity: 1;
+  border-color: rgb(249 250 251 / var(--tw-border-opacity, 1)); /* border-gray-50 */
+}
+
+/* 在暗黑模式下，調整選取時的邊框顏色 */
+@media (prefers-color-scheme: dark) {
+  .chapter-btn.selected {
+    --tw-border-opacity: 1;
+    border-color: rgb(75 85 99 / var(--tw-border-opacity, 1)); /* dark:border-gray-600 */
+  }
+}
+
+/* ====================================================================== */
+/* === [2] 全域/容器/元件樣式 (RESTORED + MODIFIED) === */
+/* ====================================================================== */
+
+.option-btn.correct {
+  background-color: #10B981;
+  color: white;
+  border-color: #059669;
+}
+
+.option-btn.incorrect {
+  background-color: #EF4444;
+  color: white;
+  border-color: #DC2626;
+}
+
+.option-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+body > div {
+  width: 50% !important;
+  height: 95vh !important;
+  display: flex;
+  flex-direction: column;
+}
+
+#quiz-container, #score-container, #selection-container, #type-selection-container, #browse-container {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding-bottom: 20px;
+}
+
+/* [MODIFIED] 調整 meta-text 和 question-text 樣式 */
+#question-meta .meta-text, #question-text, #browse-question {
+  /* 確保 meta-text 和 question-text 字體大小一致 */
+  font-size: 1.25em; /* text-xl */
+  font-weight: 600; /* font-semibold */
+  line-height: 1.7;
+  text-align: left;
+  margin-bottom: 1.5rem;
+  white-space: pre-wrap;
+}
+
+/* [MODIFIED] 將 meta-text 的顏色調整回您原來的設定 */
+#question-meta .meta-text {
+  color: #6b7280; /* text-gray-500 */
+  font-size: 1.25em; /* 確保一致 */
+  font-weight: 600; /* 確保一致 */
+  margin-bottom: 0; /* 移除額外的底部間距 */
+}
+
+
+#explanation-text, #browse-explanation {
+  font-size: 0.95em;
+  color: #6b7280;
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  text-align: left;
+  line-height: 1.7;
+  white-space: pre-wrap; /* 確保換行和筆記格式正確 */
+}
+
+/* [MODIFIED] 詳解編輯器樣式 (contenteditable div) */
+.explanation-editor {
+    /* 模仿 chapter-container 的排版風格 */
+    width: 100%;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    padding: 0.5rem 0.75rem; /* py-2 px-3 */
+    border-width: 2px;
+    border-style: solid;
+    border-color: rgb(156 163 175); /* 類似 bg-gray-400 的邊框 */
+    border-radius: 0.5rem; /* rounded-lg */
+    
+    /* 實現內容自適應高度 */
+    min-height: 2.5rem; /* 確保至少一行高度 */
+    overflow-y: hidden; /* 隱藏滾動條，允許內容擴展 */
+    white-space: pre-wrap; /* 保留換行 */
+    word-wrap: break-word; 
+
+    font-size: 0.95em;
+    line-height: 1.7;
+    
+    /* 背景和文字顏色與主題一致 */
+    background-color: #f9fafb; /* 亮色模式背景 */
+    color: #0F0F0F; /* 亮色模式文字 */
+    
+    transition: all 0.2s ease-in-out;
+}
+
+/* [NEW] Placeholder 模擬樣式 */
+.explanation-editor[contenteditable]:empty:before {
+    content: attr(data-placeholder);
+    color: #9ca3af; /* 類似 placeholder 灰色 */
+    pointer-events: none;
+    display: block; /* 使 ::before 佔據空間 */
+}
+
+/* [MODIFIED] 調整儲存/取消按鈕 hover 顏色 */
+#save-explanation-mobile-btn:hover, #browse-save-mobile-btn:hover,
+#save-explanation-desktop-btn:hover, #browse-save-desktop-btn:hover {
+    background-color: #059669; /* hover:bg-green-700 */
+}
+#cancel-explanation-btn:hover, #browse-cancel-mobile-btn:hover,
+#cancel-explanation-desktop-btn:hover, #browse-cancel-desktop-btn:hover {
+    background-color: #DC2626; /* hover:bg-red-600 */
+}
+
+
+#score-analysis {
+  text-align: left;
+  margin-top: 1.5rem;
+  padding: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+#score-analysis h3 {
+  font-size: 1.25rem;
+  font-semibold: 600;
+  margin-bottom: 0.75rem;
+}
+
+#score-analysis div {
+  margin-bottom: 0.5rem;
+}
+
+/* [MODIFIED] 收藏和筆記按鈕樣式 */
+.icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.5rem; /* text-2xl */
+    line-height: 1;
+    padding: 0.25rem;
+    transition: all 0.2s ease-in-out; /* 增加顏色過渡 */
+    
+    /* 預設顏色 (灰色/不亮) */
+    opacity: 0.5;
+    filter: grayscale(100%);
+    color: currentColor; /* 確保 SVG 使用當前文字顏色 (灰色) */
+}
+
+.icon-btn:hover {
+    transform: scale(1.1);
+    opacity: 0.7;
+}
+
+/* [MODIFIED] 收藏按鈕選中樣式 (亮起/黃色) */
+#favorite-btn.selected, #browse-favorite-btn.selected {
+    opacity: 1;
+    filter: grayscale(0%);
+    color: gold; 
+    text-shadow: 0 0 8px rgba(255, 215, 0, 0.9);
+}
+
+/* [MODIFIED] 筆記按鈕選中樣式 (亮起/藍色) */
+#note-btn.selected, #browse-note-btn.selected {
+    opacity: 1;
+    filter: grayscale(0%);
+    color: #3b82f6; /* Tailwind blue-500 */
+    text-shadow: 0 0 8px rgba(59, 130, 246, 0.9);
+}
+
+
+#browse-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+#browse-nav button {
+  background-color: #4B5563;
+  /* Gray */
+  color: white;
+  font-weight: bold;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+}
+
+#browse-nav button:hover:not(:disabled) {
+  background-color: #6B7280;
+}
+
+#browse-nav button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+#browse-jump-input {
+  flex-grow: 1;
+  margin: 0 0.75rem;
+  padding: 0.5rem;
+  border: 2px solid #D1D5DB;
+  border-radius: 8px;
+  text-align: center;
+  color: #050505;
+  /* 固定為您指定的 #050505 (覆蓋亮暗模式) */
+}
+
+/* ====================================================================== */
+/* === [3] 暗黑模式覆蓋 (RESTORED + MODIFIED) === */
+/* ====================================================================== */
+
+@media (prefers-color-scheme: dark) {
+  #explanation-text, #browse-explanation {
+    background-color: #374151;
+    color: #d1d5db;
+  }
+  
+  /* [MODIFIED] 暗黑模式下 meta-text 顏色 */
+  #question-meta .meta-text, #browse-question-header .meta-text {
+    color: #9ca3af; /* dark:text-gray-400 */
+  }
+
+  /* [MODIFIED] 暗黑模式下詳解編輯器樣式 */
+  .explanation-editor {
+    background-color: #374151; /* dark:bg-gray-700 */
+    color: #d1d5db; /* dark:text-gray-300 */
+    border-color: #4B5563; /* dark:border-gray-600 */
+  }
+
+  /* [NEW] 暗黑模式下 Placeholder 顏色 */
+  .explanation-editor[contenteditable]:empty:before {
+    color: #6b7280; /* dark:text-gray-500 */
+  }
+
+  #browse-jump-input {
+    border-color: #4B5563;
+  }
+
+  #score-analysis {
+    border-top-color: #4b5563;
+  }
+
+  #browse-nav {
+    border-top-color: #4b5563;
+  }
+}
+
+/* ====================================================================== */
+/* === [4] RWD 覆蓋 (RESTORED + MODIFIED) === */
+/* ====================================================================== */
+
+@media (max-width: 1024px) {
+  body > div {
+    width: 70% !important;
+  }
+}
+
+@media (max-width: 768px) {
+  body > div {
+    width: 95% !important;
+    height: auto !important;
+    min-height: 95vh !important;
+  }
+  
+  /* [MODIFIED] 確保手機版 meta-text 和 question-text 字體大小一致 */
+  #question-meta .meta-text, #question-text, #browse-question {
+    font-size: 1.1em; /* text-xl */
+    line-height: 1.6;
+  }
+  
+  #question-meta .meta-text, #browse-question-header .meta-text {
+    font-size: 1.1em; /* 確保一致 */
+  }
+  
+  /* [MODIFIED] 收藏/筆記按鈕在小螢幕上可以小一點 */
+  .icon-btn {
+    font-size: 1.35rem; 
+  }
+}
+
+/* ====================================================================== */
+/* === [NEW] 行動裝置 & 桌面版編輯控制項樣式 (統一) === */
+/* ====================================================================== */
+
+/* 桌面版控制項 (sm: 640px 以上) */
+.desktop-edit-controls {
+    display: none; /* 預設隱藏 */
+    justify-content: space-between;
+    gap: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+@media (min-width: 640px) { 
+    .desktop-edit-controls:not(.hidden) {
+        display: flex;
+    }
+}
+
+/* 行動裝置控制項 (max-width: 639px) */
+.mobile-edit-controls {
+    display: none; /* 預設隱藏 */
+    justify-content: space-between;
+    gap: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+@media (max-width: 639px) { 
+    .mobile-edit-controls:not(.hidden) {
+        display: flex;
+    }
+    
+    /* 確保在小螢幕上桌面版控制項絕對隱藏 */
+    .desktop-edit-controls {
+        display: none !important;
+    }
+}
+
+/* 暗黑模式調整分隔線顏色 */
+@media (prefers-color-scheme: dark) {
+    .mobile-edit-controls, .desktop-edit-controls {
+        border-top-color: #4b5563; /* dark:border-gray-700 */
+    }
+}

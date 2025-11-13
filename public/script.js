@@ -5,8 +5,13 @@ let marketQuestionsCache = []; // [NEW] 新增金融常識快取
 let chapterMap = new Map();
 
 // --- 狀態變數 ---
+// [FIX] 確保 LocalStorage 在每次啟動時正確加載
+let favorites = new Set(JSON.parse(localStorage.getItem('favorites') || '[]')); 
+let userExplanations = JSON.parse(localStorage.getItem('userExplanations') || '{}'); 
+
 let allQuestions = [], questions = [], currentQuestionIndex = 0, score = 0, scoreData = {};
 let browseQuestions = [], currentBrowseIndex = 0; 
+
 
 // --- DOM 元素 ---
 const mainTitle = document.querySelector('h1'); 
@@ -55,6 +60,29 @@ const questionMeta = document.getElementById('question-meta');
 const chapterButtonsContainer = document.getElementById('chapter-buttons-container');
 const selectAllBtn = document.getElementById('select-all-btn');
 const deselectAllBtn = document.getElementById('deselect-all-btn');
+
+// [NEW/MODIFIED] 收藏/筆記相關 DOM 元素 - 作答區
+const favoriteBtn = document.getElementById('favorite-btn');
+const noteBtn = document.getElementById('note-btn');
+const explanationEditor = document.getElementById('explanation-editor'); 
+const editControlsDesktop = document.getElementById('edit-controls-desktop');
+const saveExplanationDesktopBtn = document.getElementById('save-explanation-desktop-btn');
+const cancelExplanationDesktopBtn = document.getElementById('cancel-explanation-desktop-btn');
+const editControlsMobile = document.getElementById('edit-controls-mobile');
+const saveExplanationMobileBtn = document.getElementById('save-explanation-mobile-btn');
+const cancelExplanationBtn = document.getElementById('cancel-explanation-btn');
+
+// [NEW] 收藏/筆記相關 DOM 元素 - 瀏覽區
+const browseFavoriteBtn = document.getElementById('browse-favorite-btn');
+const browseNoteBtn = document.getElementById('browse-note-btn');
+const browseExplanationEditor = document.getElementById('browse-explanation-editor');
+const browseEditControlsDesktop = document.getElementById('browse-edit-controls-desktop');
+const browseSaveDesktopBtn = document.getElementById('browse-save-desktop-btn');
+const browseCancelDesktopBtn = document.getElementById('browse-cancel-desktop-btn');
+const browseEditControlsMobile = document.getElementById('browse-edit-controls-mobile');
+const browseSaveMobileBtn = document.getElementById('browse-save-mobile-btn');
+const browseCancelMobileBtn = document.getElementById('browse-cancel-mobile-btn');
+
 
 // --- 函數 ---
 function setMenuButtonsDisabled(disabled) { 
@@ -268,32 +296,52 @@ async function loadBrowseQuestions(jsonPath) {
     }
 }
 
+// [FIX/MODIFIED] 閱覽頁面顯示使用者筆記，統一格式
 function showBrowseQuestion() {
     if (browseQuestions.length === 0) return;
     const q = browseQuestions[currentBrowseIndex];
+    const questionId = q.id.toString(); // 獲取題目 ID
+    
+    // 重設編輯器狀態
+    browseExplanationEditor.classList.add('hidden');
+    browseEditControlsMobile.classList.add('hidden');
+    browseEditControlsDesktop.classList.add('hidden');
+    
     browseMeta.textContent = `題號: #${q.id} | 章節: ${q.category}`;
     browseQuestion.textContent = q.question;
     
-    // [MODIFIED] 處理沒有詳解的情況
-    let explanationContent = `答案：${q.answer}`;
-    if (q.explanation && q.explanation.trim() !== '') {
-        explanationContent += `\n詳解：\n${q.explanation}`;
-    } else {
-        explanationContent += `\n詳解：\n無`;
-    }
+    // [MODIFIED] 統一格式
+    let explanationContent = `解答：${q.answer}`;
+    
+    explanationContent += `\n\n詳解：\n${(q.explanation && q.explanation.trim() !== '') ? q.explanation : '無'}`;
+    
+    explanationContent += `\n\n筆記：\n${(userExplanations[questionId] && userExplanations[questionId].trim() !== '') ? userExplanations[questionId] : '無'}`;
+    
     browseExplanation.textContent = explanationContent;
     
+    // 更新圖示狀態
+    updateIconState(questionId);
+
     browsePrevBtn.disabled = (currentBrowseIndex === 0);
     browseNextBtn.disabled = (currentBrowseIndex === browseQuestions.length - 1);
 }
+
 function handleBrowsePrev() {
     if (currentBrowseIndex > 0) {
+        // 確保編輯器已關閉
+        if (!browseExplanationEditor.classList.contains('hidden')) {
+            cancelBrowseExplanationEdit();
+        }
         currentBrowseIndex--;
         showBrowseQuestion();
     }
 }
 function handleBrowseNext() {
     if (currentBrowseIndex < browseQuestions.length - 1) {
+        // 確保編輯器已關閉
+        if (!browseExplanationEditor.classList.contains('hidden')) {
+            cancelBrowseExplanationEdit();
+        }
         currentBrowseIndex++;
         showBrowseQuestion();
     }
@@ -359,6 +407,7 @@ function startQuiz() {
     showQuestion();
 }
 
+// [MODIFIED] 作答區顯示題目，統一格式
 function showQuestion() {
     resetState(); // *** resetState 會顯示「提前結束」按鈕 ***
     if (currentQuestionIndex >= questions.length) {
@@ -368,8 +417,34 @@ function showQuestion() {
     const progressPercent = ((currentQuestionIndex + 1) / questions.length) * 100;
     progressBar.style.width = `${progressPercent}%`;
     const currentQuestion = questions[currentQuestionIndex];
-    questionMeta.textContent = `題號: #${currentQuestion.id} | 章節: ${currentQuestion.category}`;
+    
+    // [MODIFIED] 調整 meta 顯示
+    questionMeta.querySelector('.meta-text').textContent = `題號: #${currentQuestion.id} | 章節: ${currentQuestion.category}`;
     questionText.textContent = currentQuestion.question;
+    
+    // 更新圖示狀態
+    const questionId = currentQuestion.id.toString();
+    updateIconState(questionId);
+    
+    // 預設隱藏詳解編輯器和控制項
+    explanationEditor.classList.add('hidden');
+    explanationEditor.textContent = ''; 
+    editControlsMobile.classList.add('hidden');
+    editControlsDesktop.classList.add('hidden');
+}
+
+// [NEW] 統一更新收藏/筆記按鈕狀態的函數
+function updateIconState(questionId) {
+    // 檢查作答區按鈕是否存在
+    if (favoriteBtn && noteBtn) {
+        favoriteBtn.classList.toggle('selected', favorites.has(questionId));
+        noteBtn.classList.toggle('selected', !!userExplanations[questionId]);
+    }
+    // 檢查瀏覽區按鈕是否存在
+    if (browseFavoriteBtn && browseNoteBtn) {
+        browseFavoriteBtn.classList.toggle('selected', favorites.has(questionId));
+        browseNoteBtn.classList.toggle('selected', !!userExplanations[questionId]);
+    }
 }
 
 function resetState() {
@@ -379,18 +454,27 @@ function resetState() {
     feedbackText.textContent = ''; 
     explanationText.textContent = ''; 
     explanationText.classList.add('hidden');
+    
+    // [NEW] 確保編輯器相關按鈕隱藏
+    explanationEditor.classList.add('hidden');
+    editControlsMobile.classList.add('hidden');
+    editControlsDesktop.classList.add('hidden');
+    noteBtn.classList.remove('hidden'); // 確保筆記按鈕可見
+    
     Array.from(optionsContainer.children).forEach(button => {
         button.disabled = false;
         button.classList.remove('correct', 'incorrect');
     });
 }
 
+// [MODIFIED] 作答區選擇答案，統一格式
 function selectAnswer(e) {
     const selectedButton = e.target;
     const selectedValue = selectedButton.dataset.value; 
     const currentQuestion = questions[currentQuestionIndex];
     const correctAnswer = currentQuestion.answer; 
     const category = currentQuestion.category;
+    const questionId = currentQuestion.id.toString(); // [NEW] 獲取題目 ID
     
     // [MODIFIED] 確保沒有 category 的題目被歸類到 '金融常識'
     const finalCategory = category && category.trim() !== '' ? category : '金融常識';
@@ -412,13 +496,13 @@ function selectAnswer(e) {
         feedbackText.style.color = '#EF4444';
     }
     
-    // [MODIFIED] 處理沒有詳解的情況
-    let explanationContent = `答案：${currentQuestion.answer}`;
-    if (currentQuestion.explanation && currentQuestion.explanation.trim() !== '') {
-        explanationContent += `\n詳解：\n${currentQuestion.explanation}`;
-    } else {
-        explanationContent += `\n詳解：\n無`;
-    }
+    // [MODIFIED] 處理詳解：統一格式
+    let explanationContent = `解答：${currentQuestion.answer}`;
+    
+    explanationContent += `\n\n詳解：\n${(currentQuestion.explanation && currentQuestion.explanation.trim() !== '') ? currentQuestion.explanation : '無'}`;
+    
+    explanationContent += `\n\n筆記：\n${(userExplanations[questionId] && userExplanations[questionId].trim() !== '') ? userExplanations[questionId] : '無'}`;
+    
     explanationText.textContent = explanationContent;
 
     explanationText.classList.remove('hidden');
@@ -428,6 +512,12 @@ function selectAnswer(e) {
         }
         button.disabled = true; 
     });
+    
+    // [NEW] 確保點擊選項後，筆記按鈕可見，但編輯器和控制項隱藏
+    explanationEditor.classList.add('hidden');
+    editControlsMobile.classList.add('hidden');
+    editControlsDesktop.classList.add('hidden');
+    noteBtn.classList.remove('hidden');
     
     endQuizBtn.classList.add('hidden'); // *** 修改：隱藏「提前結束」按鈕 ***
     nextBtn.classList.remove('hidden'); // *** 修改：顯示「下一題」按鈕 ***
@@ -501,6 +591,173 @@ function handleRestart() {
     chapterButtonsContainer.innerHTML = '';
 }
 
+// [NEW] 收藏功能 - 通用邏輯
+function toggleFavoriteGeneric(isBrowseMode) {
+    const questionsList = isBrowseMode ? browseQuestions : questions;
+    const currentIndex = isBrowseMode ? currentBrowseIndex : currentQuestionIndex;
+    
+    if (questionsList.length === 0) return;
+    const questionId = questionsList[currentIndex].id.toString();
+    
+    if (favorites.has(questionId)) {
+        favorites.delete(questionId);
+    } else {
+        favorites.add(questionId);
+    }
+    
+    // 確保資料被儲存
+    localStorage.setItem('favorites', JSON.stringify(Array.from(favorites)));
+    
+    // 更新所有相關按鈕的狀態
+    updateIconState(questionId);
+}
+
+// [NEW] 筆記功能 (切換編輯/顯示狀態) - 作答區
+function toggleExplanationEdit() {
+    toggleExplanationEditGeneric(false);
+}
+
+// [NEW] 筆記功能 (切換編輯/顯示狀態) - 瀏覽區
+function toggleBrowseExplanationEdit() {
+    toggleExplanationEditGeneric(true);
+}
+
+// [NEW] 筆記功能 (切換編輯/顯示狀態) - 通用邏輯
+function toggleExplanationEditGeneric(isBrowseMode) {
+    const questionsList = isBrowseMode ? browseQuestions : questions;
+    const currentIndex = isBrowseMode ? currentBrowseIndex : currentQuestionIndex;
+    
+    const editor = isBrowseMode ? browseExplanationEditor : explanationEditor;
+    const displayElement = isBrowseMode ? browseExplanation : explanationText;
+    const noteBtnElement = isBrowseMode ? browseNoteBtn : noteBtn;
+    const desktopControls = isBrowseMode ? browseEditControlsDesktop : editControlsDesktop;
+    const mobileControls = isBrowseMode ? browseEditControlsMobile : editControlsMobile;
+
+    if (questionsList.length === 0) return;
+    const questionId = questionsList[currentIndex].id.toString();
+
+    // 進入編輯狀態
+    if (editor.classList.contains('hidden')) {
+        editor.textContent = userExplanations[questionId] || ''; 
+        
+        // 處理 Placeholder 模擬
+        if (editor.textContent.trim() === '') {
+            editor.classList.add('placeholder-visible');
+        } else {
+            editor.classList.remove('placeholder-visible');
+        }
+
+        editor.classList.remove('hidden');
+        displayElement.classList.add('hidden');
+        noteBtnElement.classList.add('hidden'); // 編輯時隱藏筆記按鈕
+        
+        // 根據螢幕大小顯示對應的控制項 (使用 JS 檢查 window.innerWidth)
+        if (window.innerWidth >= 640) { // sm 斷點
+            desktopControls.classList.remove('hidden');
+            mobileControls.classList.add('hidden');
+        } else {
+            mobileControls.classList.remove('hidden');
+            desktopControls.classList.add('hidden');
+        }
+        
+        editor.focus();
+    } 
+    // 取消編輯狀態 (通過 Save/Cancel 按鈕或通用取消函數處理)
+}
+
+
+// [NEW] 筆記功能 (儲存) - 作答區
+function saveExplanationEdit() {
+    saveExplanationEditGeneric(false);
+}
+
+// [NEW] 筆記功能 (儲存) - 瀏覽區
+function saveBrowseExplanationEdit() {
+    saveExplanationEditGeneric(true);
+}
+
+// [NEW] 筆記功能 (儲存) - 通用邏輯
+function saveExplanationEditGeneric(isBrowseMode) {
+    const questionsList = isBrowseMode ? browseQuestions : questions;
+    const currentIndex = isBrowseMode ? currentBrowseIndex : currentQuestionIndex;
+    
+    const editor = isBrowseMode ? browseExplanationEditor : explanationEditor;
+    const desktopControls = isBrowseMode ? browseEditControlsDesktop : editControlsDesktop;
+    const mobileControls = isBrowseMode ? browseEditControlsMobile : editControlsMobile;
+    const displayElement = isBrowseMode ? browseExplanation : explanationText; // [NEW] 取得顯示元素
+    
+    if (questionsList.length === 0) return;
+    const questionId = questionsList[currentIndex].id.toString();
+    
+    // 確保從 contenteditable 獲取內容後，清理 HTML 標籤 (例如 <br>)
+    const newExplanation = editor.textContent.trim(); 
+    
+    if (newExplanation === '') {
+        delete userExplanations[questionId];
+    } else {
+        userExplanations[questionId] = newExplanation;
+    }
+    
+    // 確保資料被儲存
+    localStorage.setItem('userExplanations', JSON.stringify(userExplanations));
+    
+    // 退出編輯模式
+    editor.classList.add('hidden');
+    mobileControls.classList.add('hidden');
+    desktopControls.classList.add('hidden');
+
+    // [FIX/MODIFIED]: 更新顯示和圖示狀態，不再模擬點擊選項 (解決誤觸答案 1 的問題)
+    const currentQuestion = questionsList[currentIndex];
+    let explanationContent = `解答：${currentQuestion.answer}`;
+    
+    explanationContent += `\n\n詳解：\n${(currentQuestion.explanation && currentQuestion.explanation.trim() !== '') ? currentQuestion.explanation : '無'}`;
+    
+    explanationContent += `\n\n筆記：\n${(userExplanations[questionId] && userExplanations[questionId].trim() !== '') ? userExplanations[questionId] : '無'}`;
+    
+    displayElement.textContent = explanationContent;
+    displayElement.classList.remove('hidden');
+
+    // 更新圖示狀態 (解決按鈕顏色未變動的問題)
+    updateIconState(questionId);
+    
+    // 瀏覽模式不需要其他處理
+    if (!isBrowseMode) {
+        // 作答模式：確保筆記按鈕再次出現
+        noteBtn.classList.remove('hidden');
+    }
+}
+
+
+// [NEW] 筆記功能 (取消) - 作答區
+function cancelExplanationEdit() {
+    cancelExplanationEditGeneric(false);
+}
+
+// [NEW] 筆記功能 (取消) - 瀏覽區
+function cancelBrowseExplanationEdit() {
+    cancelExplanationEditGeneric(true);
+}
+
+// [NEW] 筆記功能 (取消) - 通用邏輯
+function cancelExplanationEditGeneric(isBrowseMode) {
+    const editor = isBrowseMode ? browseExplanationEditor : explanationEditor;
+    const displayElement = isBrowseMode ? browseExplanation : explanationText;
+    const noteBtnElement = isBrowseMode ? browseNoteBtn : noteBtn;
+    const desktopControls = isBrowseMode ? browseEditControlsDesktop : editControlsDesktop;
+    const mobileControls = isBrowseMode ? browseEditControlsMobile : editControlsMobile;
+    
+    // 退出編輯模式
+    editor.classList.add('hidden');
+    mobileControls.classList.add('hidden');
+    desktopControls.classList.add('hidden');
+    
+    // 顯示原始的顯示區
+    displayElement.classList.remove('hidden');
+    noteBtnElement.classList.remove('hidden'); // 顯示筆記按鈕
+}
+
+
+// [MISSING FUNCTION DEFINITION ADDED HERE]
 function handleKeydown(e) {
     // 1. 處理瀏覽畫面 (Browse Container)
     if (!browseContainer.classList.contains('hidden')) {
@@ -518,6 +775,14 @@ function handleKeydown(e) {
 
     // 2. 處理測驗畫面 (Quiz Container)
     if (!quizContainer.classList.contains('hidden')) {
+        
+        // [FIX] 編輯器獲取焦點時，允許所有按鍵的預設行為 (包括 Enter 的換行)
+        // 儲存/取消功能必須點擊按鈕 (解決 Enter 誤觸答案 1 的問題)
+        if (explanationEditor === document.activeElement) {
+             // 確保 Enter 鍵在 contenteditable 中執行換行（預設行為）
+            return;
+        }
+
         // 處理 "下一題" (Enter 鍵 或 空白鍵)
         if ((e.key === 'Enter' || e.key === ' ') && !nextBtn.classList.contains('hidden')) { 
             e.preventDefault(); 
@@ -525,36 +790,48 @@ function handleKeydown(e) {
             return;
         }
         
-        // 映射按鍵到選項
-        let targetValue;
-        switch (e.key.toLowerCase()) { 
-            case '1':
-            case 'j':
-                targetValue = '1';
-                break;
-            case '2':
-            case 'k':
-                targetValue = '2';
-                break;
-            case '3':
-            case 'l':
-                targetValue = '3';
-                break;
-            case '4':
-            case ';':
-                targetValue = '4';
-                break;
-            default:
-                return; 
-        }
+        // 映射按鍵到選項 (如果題目已經答完/在編輯模式則不觸發)
+        if(explanationEditor.classList.contains('hidden') && endQuizBtn.classList.contains('hidden')) {
+            let targetValue;
+            switch (e.key.toLowerCase()) { 
+                case '1':
+                case 'j':
+                    targetValue = '1';
+                    break;
+                case '2':
+                case 'k':
+                    targetValue = '2';
+                    break;
+                case '3':
+                case 'l':
+                    targetValue = '3';
+                    break;
+                case '4':
+                case ';':
+                    targetValue = '4';
+                    break;
+                case 'f': // [NEW] 收藏 (Favorite)
+                    e.preventDefault();
+                    favoriteBtn.click();
+                    return;
+                case 'n': // [NEW] 筆記 (Note)
+                    e.preventDefault();
+                    noteBtn.click();
+                    return;
+                default:
+                    return; 
+            }
 
-        const targetButton = optionsContainer.querySelector(`.option-btn[data-value="${targetValue}"]`);
+            const targetButton = optionsContainer.querySelector(`.option-btn[data-value="${targetValue}"]`);
 
-        if (targetButton && !targetButton.disabled) {
-            targetButton.click();
+            if (targetButton && !targetButton.disabled) {
+                targetButton.click();
+            }
         }
     }
 }
+// [END OF MISSING FUNCTION DEFINITION]
+
 
 // --- 事件監聽器 ---
 lawBtn.addEventListener('click', () => loadQuestions('questions_law.json'));
@@ -591,5 +868,46 @@ browseJumpInput.addEventListener('keydown', handleBrowseJump);
 chapterButtonsContainer.addEventListener('click', handleChapterToggle);
 selectAllBtn.addEventListener('click', handleSelectAll);
 deselectAllBtn.addEventListener('click', handleDeselectAll);
+
+// [NEW] 收藏和筆記事件監聽器 - 作答區
+favoriteBtn.addEventListener('click', () => toggleFavoriteGeneric(false));
+noteBtn.addEventListener('click', toggleExplanationEdit);
+saveExplanationMobileBtn.addEventListener('click', saveExplanationEdit);
+cancelExplanationBtn.addEventListener('click', cancelExplanationEdit);
+saveExplanationDesktopBtn.addEventListener('click', saveExplanationEdit);
+cancelExplanationDesktopBtn.addEventListener('click', cancelExplanationEdit);
+
+
+// [NEW] 收藏和筆記事件監聽器 - 瀏覽區
+browseFavoriteBtn.addEventListener('click', () => toggleFavoriteGeneric(true));
+browseNoteBtn.addEventListener('click', toggleBrowseExplanationEdit);
+browseSaveMobileBtn.addEventListener('click', saveBrowseExplanationEdit);
+browseCancelMobileBtn.addEventListener('click', cancelBrowseExplanationEdit);
+browseSaveDesktopBtn.addEventListener('click', saveBrowseExplanationEdit);
+browseCancelDesktopBtn.addEventListener('click', cancelBrowseExplanationEdit);
+
+// [NEW] 視窗大小改變時，重新檢查顯示哪個控制項
+window.addEventListener('resize', () => {
+    // 作答區編輯器
+    if (!explanationEditor.classList.contains('hidden')) {
+        if (window.innerWidth >= 640) {
+            editControlsDesktop.classList.remove('hidden');
+            editControlsMobile.classList.add('hidden');
+        } else {
+            editControlsMobile.classList.remove('hidden');
+            editControlsDesktop.classList.add('hidden');
+        }
+    }
+    // 瀏覽區編輯器
+    if (!browseExplanationEditor.classList.contains('hidden')) {
+        if (window.innerWidth >= 640) {
+            browseEditControlsDesktop.classList.remove('hidden');
+            browseEditControlsMobile.classList.add('hidden');
+        } else {
+            browseEditControlsMobile.classList.remove('hidden');
+            browseEditControlsDesktop.classList.add('hidden');
+        }
+    }
+});
 
 document.addEventListener('keydown', handleKeydown);

@@ -10,17 +10,17 @@
 
     <div class="w-full max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 sm:p-8 flex-grow">
         <h1 class="text-2xl sm:text-3xl font-bold text-center text-blue-600 dark:text-blue-400 mb-6">保險法規與實務 測驗</h1>
-
+        
         <div id="type-selection-container" class="space-y-5 text-center items-center flex flex-col justify-center">
             <p class="text-xl font-semibold mb-4">請選擇您想挑戰的測驗類型：</p>
             
-            <button id="law-btn" class="w-full sm:w-3/4 px-8 py-2 bg-cyan-500 hover:bg-cyan-800 text-white font-bold rounded-lg transition-colors duration-200 text-lg">
+            <button id="law-btn" class="w-full sm:w-3/4 px-8 py-2 bg-teal-500 hover:bg-teal-800 text-white font-bold rounded-lg transition-colors duration-200 text-lg">
                 (測驗) 保險法規
             </button>
-            <button id="practice-btn" class="w-full sm:w-3/4 px-8 py-2 bg-blue-500 hover:bg-blue-800 text-white font-bold rounded-lg transition-colors duration-200 text-lg">
+            <button id="practice-btn" class="w-full sm:w-3/4 px-8 py-2 bg-sky-500 hover:bg-sky-800 text-white font-bold rounded-lg transition-colors duration-200 text-lg">
                 (測驗) 保險實務
             </button>
-            <button id="market-btn" class="w-full sm:w-3/4 px-8 py-2 bg-violet-500 hover:bg-violet-800 text-white font-bold rounded-lg transition-colors duration-200 text-lg">
+            <button id="market-btn" class="w-full sm:w-3/4 px-8 py-2 bg-indigo-500 hover:bg-indigo-800 text-white font-bold rounded-lg transition-colors duration-200 text-lg">
                 (測驗) 金融常識
             </button>
             
@@ -81,16 +81,53 @@
                     <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mb-4">
                         <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
                     </div>
-                    <p id="question-meta" class="text-sm text-gray-500 dark:text-gray-400 mb-2">題號: # | 章節: </p>
+                    
+                    <div id="question-meta" class="flex justify-between items-center mb-2">
+                        <p class="meta-text text-xl sm:text-2xl font-semibold text-gray-500 dark:text-gray-400">題號: # | 章節: </p>
+                        <div class="flex space-x-2">
+                            <button id="favorite-btn" class="icon-btn text-xl sm:text-2xl" title="收藏此題 (F)">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" />
+                                </svg>
+                            </button>
+                            <button id="note-btn" class="icon-btn text-xl sm:text-2xl" title="編輯筆記 (N)">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    
                     <p id="question-text" class="text-xl sm:text-2xl font-semibold"></p>
                 </div>
 
                 <div id="feedback-container" class="h-auto min-h-[4rem] mt-4">
                     <p id="feedback-text" class="text-lg font-medium text-center"></p>
+                    
+                    <div id="explanation-editor" contenteditable="true" class="explanation-editor hidden" data-placeholder="請輸入您的自訂詳解 (Enter 儲存 / Shift+Enter 換行)"></div>
+                    
+                    <div id="edit-controls-desktop" class="desktop-edit-controls hidden">
+                        <button id="save-explanation-desktop-btn" class="w-1/2 bg-indigo-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200">
+                            儲存
+                        </button>
+                        <button id="cancel-explanation-desktop-btn" class="w-1/2 bg-gray-600 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200">
+                            取消
+                        </button>
+                    </div>
+
+                    <div id="edit-controls-mobile" class="mobile-edit-controls hidden">
+                        <button id="save-explanation-mobile-btn" class="w-1/2 bg-indigo-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200">
+                            儲存
+                        </button>
+                        <button id="cancel-explanation-btn" class="w-1/2 bg-gray-600 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200">
+                            取消
+                        </button>
+                    </div>
                     <p id="explanation-text" class="hidden"></p>
                 </div>
 
             </div>
+            
             <div id="options-container" class="grid grid-cols-2 sm:grid-cols-4 gap-3 justify-center">
                 <button class="option-btn px-4 py-8 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-200 text-lg font-bold" data-value="1">(1)</button>
                 <button class="option-btn px-4 py-8 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-200 text-lg font-bold" data-value="2">(2)</button>
@@ -103,7 +140,9 @@
             <button id="end-quiz-btn" class="w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-200 mt-2 hidden">
                 提前結束測驗
             </button>
-            </div>
+            
+        </div>
+        
         <div id="score-container" class="hidden text-center space-y-6 flex flex-col justify-center">
             <p class="text-2xl font-semibold">測驗完成！</p>
             <p id="score-text" class="4xl font-bold"></p>
@@ -117,15 +156,53 @@
 
         <div id="browse-container" class="space-y-4 hidden flex flex-col">
             <div class="flex-grow overflow-y-auto pr-2">
-                <p id="browse-meta" class="text-sm text-gray-500 dark:text-gray-400 mb-2">題號: # | 章節: </p>
+                <div id="browse-question-header" class="flex justify-between items-center mb-2">
+                    <p id="browse-meta" class="meta-text text-xl sm:text-2xl font-semibold text-gray-500 dark:text-gray-400">題號: # | 章節: </p>
+                    <div class="flex space-x-2">
+                        <button id="browse-favorite-btn" class="icon-btn text-xl sm:text-2xl" title="收藏此題">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" />
+                            </svg>
+                        </button>
+                        <button id="browse-note-btn" class="icon-btn text-xl sm:text-2xl" title="編輯筆記">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
                 <p id="browse-question"></p>
+                
+                <div id="browse-explanation-editor" contenteditable="true" class="explanation-editor hidden mt-2" data-placeholder="請輸入您的自訂筆記"></div>
+
+                <div id="browse-edit-controls-desktop" class="desktop-edit-controls hidden mt-2">
+                    <button id="browse-save-desktop-btn" class="w-1/2 bg-indigo-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200">
+                        儲存
+                    </button>
+                    <button id="browse-cancel-desktop-btn" class="w-1/2 bg-gray-600 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200">
+                        取消
+                    </button>
+                </div>
+
+                <div id="browse-edit-controls-mobile" class="mobile-edit-controls hidden mt-2">
+                    <button id="browse-save-mobile-btn" class="w-1/2 bg-indigo-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200">
+                        儲存
+                    </button>
+                    <button id="browse-cancel-mobile-btn" class="w-1/2 bg-gray-600 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200">
+                        取消
+                    </button>
+                </div>
+                
                 <p id="browse-explanation"></p>
             </div>
             
-            <div id="browse-nav">
-                <button id="browse-prev-btn">⬅️</button>
-                <input type="text" id="browse-jump-input" placeholder="跳轉至 (輸入題號)">
-                <button id="browse-next-btn">➡️</button>
+            <div id="browse-nav" class="grid grid-cols-3 gap-2">
+                <button id="browse-prev-btn" class="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">⬅️</button>
+                
+                <input type="text" id="browse-jump-input" placeholder="跳轉至" class="w-full text-center border-2 border-gray-300 rounded py-2 px-4">
+                
+                <button id="browse-next-btn" class="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">➡️</button>
             </div>
             
             <button id="browse-restart-btn" class="w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-200 mt-4">

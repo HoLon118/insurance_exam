@@ -1,7 +1,7 @@
 # 忽略所有檔案和資料夾
 *
 # --- 重新包含指定的檔案 ---
-!input.css
+!public/input.css
 !tailwind.config.js
 !package.json
 !package-lock.json
